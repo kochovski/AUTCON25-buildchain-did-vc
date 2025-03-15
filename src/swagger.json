@@ -1,0 +1,441 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "DID:Ethr Holesky Service",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/did/owner": {
+      "post": {
+        "summary": "Create DID from a fixed private key",
+        "operationId": "createDIDOwner",
+        "responses": {
+          "200": {
+            "description": "DID created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "DID created successfully"
+                    },
+                    "did": {
+                      "type": "string",
+                      "example": "did:ethr:0x1234..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/did/subject": {
+      "post": {
+        "summary": "Create DID from a random wallet key",
+        "operationId": "createDIDSubject",
+        "responses": {
+          "200": {
+            "description": "DID created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "DID created successfully"
+                    },
+                    "did": {
+                      "type": "string",
+                      "example": "did:ethr:0x4567..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/did/resolve": {
+      "get": {
+        "summary": "Resolve DID",
+        "parameters": [
+          {
+            "name": "address",
+            "in": "query",
+            "required": true,
+            "description": "DID to be resolved",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "resolveDID",
+        "responses": {
+          "200": {
+            "description": "DID resolved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Owner DID resolved successfully"
+                    },
+                    "didDocument": {
+                      "type": "object",
+                      "example": {
+                        "did": "did:ethr:0x1234abcd",
+                        "owner": "0x1234abcd"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/did/revoke": {
+      "delete": {
+        "summary": "Revoke DID",
+        "parameters": [
+          {
+            "name": "address",
+            "in": "query",
+            "required": true,
+            "description": "DID to be revoked",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "revokeDID",
+        "responses": {
+          "200": {
+            "description": "DID revoked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Owner DID revoked successfully"
+                    },
+                    "transactionHash": {
+                      "type": "string",
+                      "example": "0xabc123..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/vc": {
+      "post": {
+        "summary": "Issue a Verifiable Credential (building data)",
+        "operationId": "issueBuildingCredential",
+        "requestBody": {
+          "description": "Building data to be included in the credential",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "buildingMaterials": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": [
+                      "concrete",
+                      "steel",
+                      "glass"
+                    ]
+                  },
+                  "energyEfficiency": {
+                    "type": "string",
+                    "example": "A+"
+                  },
+                  "ifcReference": {
+                    "type": "string",
+                    "example": "IFC4_3#BuildingElement"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Building credential issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Building credential issued"
+                    },
+                    "vcId": {
+                      "type": "string",
+                      "example": "b98f63bf-7f19-402c-b704-12686f220f21"
+                    },
+                    "jwt": {
+                      "type": "string",
+                      "example": "eyJhbGciOiJFUzI1NksifQ..."
+                    },
+                    "issuer": {
+                      "type": "string",
+                      "example": "did:ethr:0x1234..."
+                    },
+                    "subject": {
+                      "type": "string",
+                      "example": "did:ethr:0x4567..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "get": {
+        "summary": "Fetch all Verifiable Credentials",
+        "operationId": "fetchAllBuildingCredentials",
+        "responses": {
+          "200": {
+            "description": "Building credentials fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Building credentials fetched successfully"
+                    },
+                    "credentials": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "jwt": {
+                            "type": "string"
+                          },
+                          "issuer": {
+                            "type": "string"
+                          },
+                          "subject": {
+                            "type": "string"
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {
+                              "buildingMaterials": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "energyEfficiency": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "example": [
+                        {
+                          "id": "b98f63bf-7f19-402c-b704-12686f220f21",
+                          "jwt": "eyJhbGciOiJFUzI1NksifQ...",
+                          "issuer": "did:ethr:0x1234...",
+                          "subject": "did:ethr:0x4567...",
+                          "data": {
+                            "buildingMaterials": [
+                              "concrete",
+                              "glass"
+                            ],
+                            "energyEfficiency": "A+"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/vc/{id}": {
+      "put": {
+        "summary": "Update a specific VC by ID",
+        "operationId": "updateBuildingCredential",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The VC ID to update",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "b98f63bf-7f19-402c-b704-12686f220f21"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Updated building data or credential fields",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "buildingMaterials": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": [
+                      "steel",
+                      "glass"
+                    ]
+                  },
+                  "energyEfficiency": {
+                    "type": "string",
+                    "example": "B"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Building credential updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Building credential updated"
+                    },
+                    "updatedVC": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "example": "b98f63bf-7f19-402c-b704-12686f220f21"
+                        },
+                        "jwt": {
+                          "type": "string",
+                          "example": "eyJhbGciOiJFUzI1NksifQ..."
+                        },
+                        "issuer": {
+                          "type": "string",
+                          "example": "did:ethr:0x1234..."
+                        },
+                        "subject": {
+                          "type": "string",
+                          "example": "did:ethr:0x4567..."
+                        },
+                        "data": {
+                          "type": "object",
+                          "example": {
+                            "buildingMaterials": [
+                              "steel",
+                              "glass"
+                            ],
+                            "energyEfficiency": "B"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a specific VC by ID",
+        "operationId": "deleteBuildingCredential",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The VC ID to delete",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "b98f63bf-7f19-402c-b704-12686f220f21"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Building credential deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Building credential deleted"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    }
+  }
+}
