@@ -101,33 +101,30 @@ app.delete('/did/revoke', async (req, res) => {
 // 6. Issue a verifiable credential
 app.post('/vc', async (req, res) => {
     try {
-        // The body might contain credential subject info, e.g. name, role, etc.
         const buildingData = req.body;
-        const result = await issueBuildingCredential(buildingData);
+        const result = await issueBuildingCredential(buildingData, FIXED_PRIVATE_KEY);
+
         res.status(200).json({
             message: 'Building credential issued',
-            vcId: result.vcId,
-            jwt: result.jwt,
-            issuer: result.issuer,
-            subject: result.subject
+            result
         });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({error: err.message});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({error: error.message});
     }
 });
 
 // Fetch all VCs
 app.get('/vc', (req, res) => {
     try {
-        const result = fetchAllBuildingCredentials();
+        const credentials = fetchAllBuildingCredentials();
         res.status(200).json({
             message: 'Building credentials fetched successfully',
-            credentials: result.credentials
+            credentials
         });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({error: err.message});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({error: error.message});
     }
 });
 
@@ -135,15 +132,16 @@ app.get('/vc', (req, res) => {
 app.put('/vc/:id', (req, res) => {
     try {
         const vcId = req.params.id;
-        const updatedData = req.body;
-        const result = updateBuildingCredential(vcId, updatedData);
+        const newData = req.body;
+        const updatedVC = updateBuildingCredential(vcId, newData);
+
         res.status(200).json({
             message: 'Building credential updated',
-            updatedVC: result.updatedVC
+            credential: updatedVC
         });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({error: err.message});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({error: error.message});
     }
 });
 
@@ -151,13 +149,14 @@ app.put('/vc/:id', (req, res) => {
 app.delete('/vc/:id', (req, res) => {
     try {
         const vcId = req.params.id;
-        const result = deleteBuildingCredential(vcId);
+        deleteBuildingCredential(vcId);
+
         res.status(200).json({
             message: 'Building credential deleted'
         });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({error: err.message});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({error: error.message});
     }
 });
 

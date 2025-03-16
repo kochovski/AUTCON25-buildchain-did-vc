@@ -1,9 +1,10 @@
 const {ethers} = require('ethers');
 const EthrDID = require('ethr-did').EthrDID;
-const {createVerifiableCredentialJwt, verifyCredential} = require('did-jwt-vc');
+const {createVerifiableCredentialJwt} = require('did-jwt-vc');
 const {Resolver} = require('did-resolver');
 const {getResolver} = require('ethr-did-resolver');
 const {v4: uuidv4} = require('uuid');
+const {ES256KSigner} = require("did-jwt");
 
 const ALCHEMY_API_URL = process.env.ALCHEMY_API_URL;
 const REGISTRY_ADDRESS = process.env.REGISTRY_ADDRESS;
@@ -13,12 +14,15 @@ const HOLESKY_CHAIN_ID = 17000;
 const buildingCredentials = [];
 
 // We'll keep references here so we don't constantly recreate them
-let fixedDidInstance = null;
-let randomDidInstance = null;
+let ownerDIDInstance = null;
+let subjectDIDInstance = null;
+
+let ownerDIDfull = null;
+let subjectDIDfull = null;
 
 // DID Resolver for ethr-did
 const ethrResolver = getResolver({
-    name: 'holesky',
+    //name: 'holesky',
     chainId: HOLESKY_CHAIN_ID,
     rpcUrl: ALCHEMY_API_URL,
     registry: REGISTRY_ADDRESS
@@ -29,9 +33,9 @@ const didResolver = new Resolver(ethrResolver);
 /**
  * createDid:
  *   - If 'privateKey' is provided, create a DID using that private key
- *     and store it in 'fixedDidInstance'.
+ *     and store it in 'ownerDIDInstance'.
  *   - If 'privateKey' is not provided, generate a random wallet
- *     and store that DID in 'randomDidInstance'.
+ *     and store that DID in 'subjectDIDInstance'.
  *
  * @param {string} providerUrl - e.g. your Alchemy Holesky testnet URL
  * @param {number} chainId     - e.g. 17000 for Holesky
@@ -48,30 +52,46 @@ async function createDID(providerUrl, chainId, privateKey) {
     if (privateKey) {
         walletPrivateKey = privateKey;
         const wallet = new ethers.Wallet(walletPrivateKey, provider);
+
+        // Create a "signer" from your issuer's private key
+        //    - remove the '0x' prefix and pass the raw hex for ES256KSigner
+        //    - the second param (true) means we want the "recoveryParam" appended
+        const issuerSigner = ES256KSigner(wallet.privateKey.slice(2), true);
+
         // Create DID from the given (fixed) private key
         didInstance = new EthrDID({
             identifier: wallet.address,
+            signer: issuerSigner,
             privateKey: walletPrivateKey,
             provider,
             chainNameOrId: HOLESKY_CHAIN_ID,
+            alg: 'ES256K'
         });
-        fixedDidInstance = didInstance.did; // store as "fixed" DID
+
+        ownerDIDInstance = didInstance.did; // store as "fixed" DID
+        ownerDIDfull = didInstance;
         console.log(`Owner from predefined wallet`);
-        console.log(`DID Owner: `, fixedDidInstance);
+        console.log(`DID Owner: `, ownerDIDfull);
 
     } else {
         // Generate a random DID
         const wallet = ethers.Wallet.createRandom();
+        const subjectSigner = ES256KSigner(wallet.privateKey.slice(2), true);
+
         didInstance = new EthrDID({
             identifier: wallet.address,
+            signer: subjectSigner,
             privateKey: wallet.privateKey,
             provider,
-            chainNameOrId: chainId,
+            chainNameOrId: HOLESKY_CHAIN_ID,
+            alg: 'ES256K'
         });
-        randomDidInstance = didInstance.did; // store as "random" DID
+
+        subjectDIDInstance = didInstance.did; // store as "random" DID
+        subjectDIDfull = didInstance;
         walletPrivateKey = wallet.privateKey;
         console.log(`Subject from generated wallet`);
-        console.log(`DID Subject: `, randomDidInstance);
+        console.log(`DID Subject: `, subjectDIDfull);
     }
 
     const end = Date.now();
@@ -139,61 +159,67 @@ async function revokeDID(did) {
  * - Issuer: didInstances.fixed
  * - Subject: didInstances.random
  */
-async function issueBuildingCredential(buildingData) {
-    const fixedDid = didInstances.fixed;
-    const randomDid = didInstances.random;
-
-    if (!fixedDid) {
-        throw new Error("Fixed DID is not initialized. Please create it first.");
+async function issueBuildingCredential(buildingData, privateKey) {
+    if (!ownerDIDfull) {
+        throw new Error("Fixed DID (issuer) is not initialized.");
     }
-    if (!randomDid) {
-        throw new Error("Random DID is not initialized. Please create it first.");
+    if (!subjectDIDfull) {
+        throw new Error("Random DID (subject) is not initialized.");
     }
 
     const start = Date.now();
+    try {
 
-    // Build the credential payload referencing an IFC ontology in @context
-    const vcPayload = {
-        sub: randomDid.did,
-        nbf: Math.floor(Date.now() / 1000),
-        vc: {
-            "@context": [
-                "https://www.w3.org/2018/credentials/v1",
-                "https://standards.buildingsmart.org/IFC/DEV/IFC4_3/RC3/OWL"
-            ],
-            type: ["VerifiableCredential", "BuildingCredential"],
-            credentialSubject: {
-                ...buildingData
+        // Subject DID
+        const subjectDid = subjectDIDfull.did;
+        const issuerDid = ownerDIDfull.did;
+
+        // Minimal IFC-like building credential payload
+        const credentialPayload = {
+            sub: subjectDid,
+            nbf: Math.floor(Date.now() / 1000),
+            vc: {
+                '@context': [
+                    'https://www.w3.org/2018/credentials/v1',
+                    // Example IFC context
+                    'https://example.org/ifc/v1'
+                ],
+                type: ['VerifiableCredential', 'IFCBuildingCredential'],
+                credentialSubject: {
+                    buildingData
+                }
             }
-        }
-    };
+        };
 
-    // Sign with the fixed DID
-    const jwt = await createVerifiableCredentialJwt(vcPayload, {
-        issuer: fixedDid.did,
-        signer: fixedDid.signer,
-        alg: "ES256K-R"
-    });
+        // Create the credential JWT
+        const vcJwt = await createVerifiableCredentialJwt(credentialPayload, ownerDIDfull);
 
-    // Store in-memory
-    const vcId = uuidv4();
-    buildingCredentials.push({
-        id: vcId,
-        jwt,
-        issuer: fixedDid.did,
-        subject: randomDid.did,
-        data: buildingData
-    });
+        //Store in memory
+        const vcId = 'vc-' + Date.now();
+        buildingCredentials[vcId] = {
+            id: vcId,
+            credentialPayload,
+            jwt: vcJwt,
+            subjectDid,
+            issuerDid
+        };
 
-    const end = Date.now();
-    console.log(`[issueBuildingCredential] Execution time: ${end - start} ms`);
+        const finalVC = buildingCredentials[vcId]
 
-    return {
-        vcId,
-        jwt,
-        issuer: fixedDid.did,
-        subject: randomDid.did
-    };
+        console.log('buildingCredentials ', buildingCredentials[vcId]);
+
+        const end = Date.now();
+        console.log(`[issueBuildingCredential] Execution time: ${end - start} ms`);
+
+
+        return {
+            vcId,
+            finalVC
+        };
+
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 /**
@@ -202,9 +228,10 @@ async function issueBuildingCredential(buildingData) {
 function fetchAllBuildingCredentials() {
     const start = Date.now();
     const credentials = [...buildingCredentials];
-    const end = Date.now();
 
+    const end = Date.now();
     console.log(`[fetchAllBuildingCredentials] Execution time: ${end - start} ms`);
+
     return credentials;
 }
 
@@ -214,11 +241,11 @@ function fetchAllBuildingCredentials() {
 function updateBuildingCredential(vcId, newData) {
     const start = Date.now();
 
-    const index = buildingCredentials.findIndex(vc => vc.id === vcId);
+    const index = buildingCredentials.findIndex((vc) => vc.id === vcId);
     if (index === -1) {
         throw new Error(`VC with id ${vcId} not found`);
     }
-
+    // Just update the data field
     buildingCredentials[index].data = newData;
 
     const end = Date.now();
@@ -233,11 +260,10 @@ function updateBuildingCredential(vcId, newData) {
 function deleteBuildingCredential(vcId) {
     const start = Date.now();
 
-    const index = buildingCredentials.findIndex(vc => vc.id === vcId);
+    const index = buildingCredentials.findIndex((vc) => vc.id === vcId);
     if (index === -1) {
         throw new Error(`VC with id ${vcId} not found`);
     }
-
     buildingCredentials.splice(index, 1);
 
     const end = Date.now();
