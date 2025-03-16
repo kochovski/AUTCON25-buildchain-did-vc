@@ -92,6 +92,7 @@ async function createDID(providerUrl, chainId, privateKey) {
         walletPrivateKey = wallet.privateKey;
         console.log(`Subject from generated wallet`);
         console.log(`DID Subject: `, subjectDIDfull);
+        console.log(`DID Subject pk: `, wallet.privateKey);
     }
 
     const end = Date.now();
@@ -132,26 +133,37 @@ async function resolveDID(did) {
     };
 }
 
-async function revokeDID(did) {
+async function revokeDID(did, pkey) {
 
-    let didInstance = did;
+    //let didInstance = did;
+    let privateKey = pkey;
+    console.log("PK ", privateKey);
+
+    const provider = new ethers.JsonRpcProvider(ALCHEMY_API_URL);
 
     const start = Date.now();
 
-    const txReceipt = await didInstance.setOwner(
-        "0x000000000000000000000000000000000000dEaD"
-    );
-    await txReceipt.wait();
+    const signer = ES256KSigner(privateKey.slice(2), true);
+
+    const didInstance = new EthrDID({
+        identifier: did,
+        signer,
+        privateKey,
+        provider,
+        chainNameOrId: HOLESKY_CHAIN_ID,
+        registry: REGISTRY_ADDRESS
+    });
+
+    const txReceipt = await didInstance.changeOwner('0x000000000000000000000000000000000000dEaD');
+    console.log('Transaction hash:', txReceipt);
 
     // Clear the local instance
-    didInstance = null;
+    //didInstance = null;
 
     const end = Date.now();
     console.log(`[revokeDID] Execution time: ${end - start} ms`);
 
-    return {
-        transactionHash: txReceipt.hash,
-    };
+    return txReceipt;
 }
 
 /**
@@ -206,11 +218,12 @@ async function issueBuildingCredential(buildingData, privateKey) {
 
         const finalVC = buildingCredentials[vcId]
 
+        buildingCredentials.push(finalVC);
+
         console.log('buildingCredentials ', buildingCredentials[vcId]);
 
         const end = Date.now();
         console.log(`[issueBuildingCredential] Execution time: ${end - start} ms`);
-
 
         return {
             vcId,
@@ -227,7 +240,7 @@ async function issueBuildingCredential(buildingData, privateKey) {
  */
 function fetchAllBuildingCredentials() {
     const start = Date.now();
-    const credentials = [...buildingCredentials];
+    const credentials = [buildingCredentials];
 
     const end = Date.now();
     console.log(`[fetchAllBuildingCredentials] Execution time: ${end - start} ms`);

@@ -124,6 +124,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "pkey",
+            "in": "query",
+            "required": true,
+            "description": "DID private key",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "operationId": "revokeDID",

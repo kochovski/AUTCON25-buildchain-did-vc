@@ -82,14 +82,14 @@ app.get('/did/resolve', async (req, res) => {
 // 3. Revoke DID
 app.delete('/did/revoke', async (req, res) => {
     try {
-        const {address} = req.query;
-        if (!address) {
-            res.status(400).json({error: 'Missing address query param'});
+        const {address, pkey} = req.query;
+        if (!address || !pkey) {
+            res.status(400).json({error: 'Missing address or pkey query param'});
         } else {
-            const result = await revokeDID(address);
+            const result = await revokeDID(address, pkey);
             res.status(200).json({
                 message: 'DID revoked successfully',
-                transactionHash: result.transactionHash
+                transactionHash: result
             });
         }
     } catch (err) {
