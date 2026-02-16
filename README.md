@@ -16,6 +16,12 @@ Before running the service, ensure you have the following installed:
 * **npm** package manager (bundled with Node.js).
 * An **Alchemy Holesky** or other Ethereum RPC endpoint URL for interacting with the Ethereum testnet.  You will also need a **private key** for the issuer DID (owner) and the **Ethr DID Registry contract address** deployed on your network.
 
+## License
+
+This repository forms part of the research described in “Leveraging IFC Semantics and W3C Decentralized Identifiers in BUILDCHAIN: A Decentralized Digital Building Logbook for Construction and Deep Renovation”. Until the final publication of this work, any reuse of the code (including modification, redistribution or derivation) is strictly forbidden.
+
+After the work has been formally published, commercial use or distribution of this code is permitted only with the prior written consent of the authors. If you wish to build upon or distribute this repository, please contact the authors of the above‑mentioned paper to obtain permission.
+
 ## Installation
 
 Clone the repository and install dependencies:
@@ -24,9 +30,3 @@ Clone the repository and install dependencies:
 git clone https://github.com/kochovski/AUTCON25-buildchain-did-vc.git
 cd AUTCON25-buildchain-did-vc
 npm install
-
-## License
-
-This repository forms part of the research described in “Leveraging IFC Semantics and W3C Decentralized Identifiers in BUILDCHAIN: A Decentralized Digital Building Logbook for Construction and Deep Renovation”. Until the final publication of this work, any reuse of the code (including modification, redistribution or derivation) is strictly forbidden.
-
-After the work has been formally published, commercial use or distribution of this code is permitted only with the prior written consent of the authors. If you wish to build upon or distribute this repository, please contact the authors of the above‑mentioned paper to obtain permission.
