@@ -6,7 +6,7 @@ This repository contains a simple Node.js service for working with **[Decentrali
 
 The service exposes a REST API built on top of Express.  Each endpoint is documented in an OpenAPI/Swagger specification served by `swagger-ui-express` on `/api-docs`:contentReference[oaicite:0]{index=0}.  You can explore and interact with the API in a browser without writing code.
 
-> **Note**: This code is a **proof of concept**.  It stores credentials only in memory and is not suitable for production use without additional persistence, error handling and security hardening.  Private keys should never be committed to version control or hard‑coded; use environment variables instead.
+> **Note**: This code is a **proof of concept**. Private keys should never be committed to version control or hard‑coded; use environment variables instead.
 
 ## Prerequisites
 
@@ -24,3 +24,9 @@ Clone the repository and install dependencies:
 git clone https://github.com/kochovski/AUTCON25-buildchain-did-vc.git
 cd AUTCON25-buildchain-did-vc
 npm install
+
+## License
+
+This repository forms part of the research described in “Leveraging IFC Semantics and W3C Decentralized Identifiers in BUILDCHAIN: A Decentralized Digital Building Logbook for Construction and Deep Renovation”. Until the final publication of this work, any reuse of the code (including modification, redistribution or derivation) is strictly forbidden.
+
+After the work has been formally published, commercial use or distribution of this code is permitted only with the prior written consent of the authors. If you wish to build upon or distribute this repository, please contact the authors of the above‑mentioned paper to obtain permission.
